@@ -1,7 +1,8 @@
-import { Body, Controller, Get, Post, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, NotFoundException, Param, Post, Request, UseGuards } from '@nestjs/common';
 import { SignInDTO, SignUpDTO } from './dtos/auth';
 import { AuthService } from './auth.service';
 import { AuthGuard } from './auth.guard';
+import { User } from 'generated/prisma';
 
 @Controller('auth')
 export class AuthController {
@@ -18,9 +19,28 @@ export class AuthController {
     }
 
     @UseGuards(AuthGuard)
-    @Get('me')
-    async me(@Request() request) {
-        return request.user;
+    @Get('users')
+    async getAllUsers(): Promise<User[] | null> {
+        return this.authService.getAll();
     }
+
+    @UseGuards(AuthGuard)
+    @Get('users/:id')
+    async getUserById(@Param('id') id: string): Promise<User | null> {
+        const user = await this.authService.getById(id);
+
+        if (!user) {
+            throw new NotFoundException(`Usuário não encontrado`);
+        }
+
+        return user;
+    }
+
+    @UseGuards(AuthGuard)
+    @Delete('users/:id')
+    async deleteUser(@Param('id') id: string): Promise<User | null> {
+        return await this.authService.deleteUser(id);
+    }
+
 
 }
